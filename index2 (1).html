@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kisan AI – Smart Farming Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #1a3a2a;
+    --green-mid: #2d6a4f;
+    --green-bright: #52b788;
+    --green-light: #95d5b2;
+    --gold: #e9c46a;
+    --earth: #bc6c25;
+    --cream: #fefae0;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #d1fae5;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+  nav {
+    background: var(--green-dark);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 60px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 8px; color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+  .lang-scroll { display: flex; gap: 5px; overflow-x: auto; max-width: 60vw; padding-bottom: 2px; scrollbar-width: none; }
+  .lang-scroll::-webkit-scrollbar { display: none; }
+  .lang-btn {
+    background: rgba(255,255,255,.15); color: #fff;
+    border: 1px solid rgba(255,255,255,.3); border-radius: 20px;
+    padding: 4px 10px; font-size: 0.72rem; cursor: pointer; white-space: nowrap;
+    transition: all .2s; font-family: 'DM Sans', sans-serif; flex-shrink: 0;
+  }
+  .lang-btn.active { background: var(--gold); color: var(--green-dark); border-color: var(--gold); font-weight: 700; }
+
+  .tabs { display: flex; background: var(--green-dark); padding: 0 16px; gap: 2px; border-top: 1px solid rgba(255,255,255,.1); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    background: none; border: none; color: rgba(255,255,255,.6);
+    padding: 11px 14px; font-size: 0.82rem; cursor: pointer;
+    border-bottom: 3px solid transparent; font-family: 'DM Sans', sans-serif;
+    font-weight: 500; transition: all .2s; white-space: nowrap;
+  }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-btn:hover:not(.active) { color: var(--green-light); }
+
+  .section { display: none; padding: 20px 16px; max-width: 960px; margin: 0 auto; }
+  .section.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  .card { background: #fff; border-radius: 16px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 2px 12px rgba(45,106,79,.07); margin-bottom: 18px; }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--green-dark); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:600px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  select, input[type=text], input[type=number], textarea {
+    border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 10px 14px;
+    font-size: 0.92rem; font-family: 'DM Sans', sans-serif; color: var(--text);
+    background: #f9fafb; transition: border-color .2s, box-shadow .2s; outline: none; width: 100%;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(82,183,136,.2); background: #fff; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* MIC INPUT WRAPPER */
+  .mic-input-wrap { position: relative; }
+  .mic-input-wrap textarea, .mic-input-wrap input { padding-right: 44px; }
+  .mic-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 1.2rem;
+    color: var(--muted); transition: all .2s; padding: 4px;
+  }
+  .mic-btn:hover { color: var(--green-mid); transform: translateY(-50%) scale(1.1); }
+  .mic-btn.recording { color: var(--red); animation: pulse 1s infinite; }
+  .mic-btn-textarea { top: 20px; transform: none; }
+  .mic-btn-textarea.recording { transform: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 10px; border: none;
+    font-size: 0.92rem; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-primary { background: var(--green-mid); color: #fff; }
+  .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(45,106,79,.3); }
+  .btn-gold { background: var(--gold); color: var(--green-dark); }
+  .btn-gold:hover { background: #d4a843; transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--green-mid); border: 1.5px solid var(--green-mid); }
+  .btn-outline:hover { background: var(--green-mid); color: #fff; }
+  .btn-sm { padding: 7px 14px; font-size: 0.83rem; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+
+  .crop-options { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 10px; }
+  @media(max-width:600px) { .crop-options { grid-template-columns: 1fr; } }
+  .crop-card { border: 2px solid #e5e7eb; border-radius: 14px; padding: 16px; cursor: pointer; transition: all .25s; background: #fff; position: relative; }
+  .crop-card:hover { border-color: var(--green-bright); box-shadow: 0 4px 20px rgba(82,183,136,.2); transform: translateY(-2px); }
+  .crop-card.selected { border-color: var(--green-mid); background: #f0fdf4; }
+  .crop-card .badge { position: absolute; top: 8px; right: 8px; background: var(--gold); color: var(--green-dark); font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+  .crop-icon { font-size: 2.2rem; margin-bottom: 8px; }
+  .crop-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--green-dark); }
+  .crop-stat { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+  .crop-profit { font-weight: 600; color: var(--green-mid); margin-top: 5px; font-size: 0.87rem; }
+
+  .detail-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .dtab { padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border); font-size: 0.8rem; font-weight: 500; cursor: pointer; background: #fff; color: var(--muted); transition: all .2s; font-family: 'DM Sans', sans-serif; }
+  .dtab.active { background: var(--green-mid); color: #fff; border-color: var(--green-mid); }
+  .detail-pane { display: none; }
+  .detail-pane.active { display: block; animation: fadeIn .25s ease; }
+
+  .timeline { position: relative; padding-left: 26px; }
+  .timeline::before { content:''; position:absolute; left:9px; top:0; bottom:0; width:2px; background:var(--border); border-radius:2px; }
+  .tl-item { position: relative; margin-bottom: 18px; }
+  .tl-dot { position: absolute; left: -22px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--green-bright); border: 2px solid var(--green-mid); }
+  .tl-title { font-weight: 600; color: var(--green-dark); font-size: 0.88rem; }
+  .tl-desc { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+  .tl-cost { font-weight: 600; color: var(--earth); font-size: 0.85rem; margin-top: 3px; }
+
+  .pest-grid { display: grid; gap: 10px; }
+  .pest-row { display: flex; align-items: flex-start; gap: 12px; background: #fff8f0; border: 1px solid #fed7aa; border-radius: 10px; padding: 12px 14px; }
+  .pest-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .pest-name { font-weight: 600; color: var(--earth); font-size: 0.88rem; }
+  .pest-desc { font-size: 0.8rem; color: var(--muted); }
+  .pest-solution { font-size: 0.8rem; color: var(--green-mid); font-weight: 500; margin-top: 2px; }
+
+  .price-chart { background: #f0fdf4; border-radius: 12px; padding: 14px; }
+  .price-bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .price-month { font-size: 0.78rem; color: var(--muted); width: 30px; flex-shrink: 0; }
+  .price-bar-bg { flex: 1; background: #d1fae5; border-radius: 20px; height: 18px; overflow: hidden; }
+  .price-bar { height: 100%; border-radius: 20px; background: var(--green-mid); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; transition: width .8s ease; }
+  .price-val { font-size: 0.7rem; color: #fff; font-weight: 600; }
+  .price-peak { background: var(--gold) !important; }
+  .peak-label { font-size: 0.72rem; color: var(--earth); font-weight: 700; margin-left: 4px; }
+
+  .sell-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:600px) { .sell-grid { grid-template-columns: 1fr; } }
+  .sell-card { border-radius: 12px; padding: 14px; border: 1px solid #e5e7eb; }
+  .sell-card.gov { background: #eff6ff; border-color: #bfdbfe; }
+  .sell-card.pvt { background: #f0fdf4; border-color: #bbf7d0; }
+  .sell-tag { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+  .sell-tag.gov { color: var(--blue); }
+  .sell-tag.pvt { color: var(--green-mid); }
+  .sell-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; color: var(--green-dark); }
+  .sell-info { font-size: 0.8rem; color: var(--muted); }
+  .no-middleman { display: inline-block; background: #fef3c7; color: #92400e; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-top: 5px; }
+
+  .upload-zone { border: 2px dashed #d1fae5; border-radius: 14px; padding: 28px; text-align: center; cursor: pointer; transition: all .2s; background: #f9fafb; position: relative; }
+  .upload-zone:hover { border-color: var(--green-mid); background: #f0fdf4; }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  #preview-img { max-height: 160px; border-radius: 10px; margin-top: 10px; display: none; border: 2px solid var(--green-light); }
+
+  /* SUBSIDIES */
+  .subsidy-list { display: grid; gap: 10px; }
+  .subsidy-item { display: flex; align-items: flex-start; gap: 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 12px 14px; }
+  .subsidy-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .subsidy-name { font-weight: 600; color: var(--green-dark); font-size: 0.88rem; }
+  .subsidy-desc { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .subsidy-amt { font-weight: 700; color: var(--earth); font-size: 0.85rem; margin-top: 3px; }
+  .subsidy-source { font-size: 0.72rem; color: var(--blue); margin-top: 3px; }
+
+  /* LIVE BADGE */
+  .live-badge { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-left: 8px; }
+  .live-dot { width: 7px; height: 7px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
+
+  .ai-response { background: linear-gradient(135deg,#f0fdf4,#ecfdf5); border: 1.5px solid var(--green-light); border-radius: 14px; padding: 18px; margin-top: 14px; display: none; }
+  .ai-response.show { display: block; animation: fadeIn .4s ease; }
+  .ai-label { font-size: 0.73rem; font-weight: 700; color: var(--green-mid); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .ai-text { font-size: 0.9rem; line-height: 1.65; color: var(--text); }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .compare-table th { background: var(--green-dark); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; }
+  .compare-table th:first-child { border-radius: 10px 0 0 0; }
+  .compare-table th:last-child { border-radius: 0 10px 0 0; }
+  .compare-table td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:nth-child(even) td { background: #f9fafb; }
+  .compare-table tr.highlight td { background: #f0fdf4 !important; font-weight: 600; }
+  .green { color: var(--green-mid); } .red { color: var(--red); }
+
+  .companion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width:600px) { .companion-grid { grid-template-columns: 1fr; } }
+  .companion-card { border-radius: 12px; padding: 12px; background: #fefce8; border: 1px solid #fde68a; display: flex; gap: 10px; align-items: flex-start; }
+  .companion-icon { font-size: 1.8rem; flex-shrink: 0; }
+  .companion-name { font-weight: 600; color: var(--green-dark); font-size: 0.88rem; }
+  .companion-benefit { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; }
+  .tag-green { background: #d1fae5; color: #065f46; }
+  .tag-gold { background: #fef3c7; color: #92400e; }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .hidden { display: none !important; }
+
+  .hero { background: linear-gradient(135deg,var(--green-dark) 0%,var(--green-mid) 100%); color: #fff; padding: 24px 18px; position: relative; overflow: hidden; }
+  .hero::before { content:'🌾'; position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:4.5rem; opacity:.12; }
+  .hero-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.45rem; letter-spacing: -0.5px; }
+  .hero-sub { font-size: 0.87rem; opacity: .8; margin-top: 3px; }
+
+  /* MIC STATUS TOAST */
+  #mic-toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--green-dark); color: #fff; padding: 10px 20px;
+    border-radius: 24px; font-size: 0.85rem; font-weight: 600;
+    display: none; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,.3);
+    animation: fadeIn .2s ease;
+  }
+  #mic-toast.show { display: block; }
+
+  /* LOADING SKELETON */
+  .skel { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">🌿 Kisan AI</div>
+  <div class="lang-scroll">
+    <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+    <button class="lang-btn" onclick="setLang('hi',this)">हिंदी</button>
+    <button class="lang-btn" onclick="setLang('te',this)">తెలుగు</button>
+    <button class="lang-btn" onclick="setLang('mr',this)">मराठी</button>
+    <button class="lang-btn" onclick="setLang('gu',this)">ગુજરાતી</button>
+    <button class="lang-btn" onclick="setLang('bn',this)">বাংলা</button>
+    <button class="lang-btn" onclick="setLang('or',this)">ଓଡ଼ିଆ</button>
+    <button class="lang-btn" onclick="setLang('as',this)">অসমীয়া</button>
+  </div>
+</nav>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('crop',this)" data-key="tab_crop">🌱 Crop Advisor</button>
+  <button class="tab-btn" onclick="showTab('plant',this)" data-key="tab_plant">🔬 Plant Doctor</button>
+  <button class="tab-btn" onclick="showTab('market',this)" data-key="tab_market">🏪 Sell Produce</button>
+  <button class="tab-btn" onclick="showTab('subsidy',this)" data-key="tab_subsidy">💰 Subsidies</button>
+</div>
+
+<div id="mic-toast">🎤 <span id="mic-toast-text">Listening…</span></div>
+
+<!-- ════════════════════ CROP ADVISOR ════════════════════ -->
+<div id="tab-crop" class="section active">
+  <div class="hero">
+    <div class="hero-title" data-key="crop_hero_title">Smart Crop Advisor</div>
+    <div class="hero-sub" data-key="crop_hero_sub">AI-powered recommendations tailored to your farm</div>
+  </div>
+  <div class="card" style="margin-top:18px;">
+    <div class="card-title">📋 <span data-key="farmer_details">Farmer Details</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label data-key="lbl_region">Region / State</label>
+        <select id="region">
+          <option value="" data-key="sel_region">Select region…</option>
+          <option value="Punjab">Punjab</option><option value="Maharashtra">Maharashtra</option>
+          <option value="Andhra Pradesh">Andhra Pradesh</option><option value="Telangana">Telangana</option>
+          <option value="Uttar Pradesh">Uttar Pradesh</option><option value="Rajasthan">Rajasthan</option>
+          <option value="Gujarat">Gujarat</option><option value="Karnataka">Karnataka</option>
+          <option value="Tamil Nadu">Tamil Nadu</option><option value="West Bengal">West Bengal</option>
+          <option value="Madhya Pradesh">Madhya Pradesh</option><option value="Odisha">Odisha</option>
+          <option value="Assam">Assam</option><option value="Bihar">Bihar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-key="lbl_soil">Soil Type</label>
+        <select id="soil">
+          <option value="" data-key="sel_soil">Select soil type…</option>
+          <option value="Alluvial">Alluvial</option><option value="Black">Black / Regur</option>
+          <option value="Red">Red & Yellow</option><option value="Laterite">Laterite</option>
+          <option value="Sandy">Sandy / Desert</option><option value="Loamy">Loamy</option>
+          <option value="Clay">Clay</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-key="lbl_season">Season</label>
+        <select id="season">
+          <option value="" data-key="sel_season">Select season…</option>
+          <option value="Kharif">Kharif (June–November)</option>
+          <option value="Rabi">Rabi (November–April)</option>
+          <option value="Zaid">Zaid (April–June)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-key="lbl_budget">Budget (₹)</label>
+        <select id="budget">
+          <option value="" data-key="sel_budget">Select budget…</option>
+          <option value="low">Under ₹50,000</option>
+          <option value="medium">₹50,000 – ₹1,50,000</option>
+          <option value="high">₹1,50,000 – ₹5,00,000</option>
+          <option value="very_high">Above ₹5,00,000</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" id="generate-btn" onclick="generateCrops()">
+        <span id="gen-icon">🤖</span> <span data-key="btn_generate">Generate Crop Options</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="crop-options-section" class="hidden">
+    <div class="card">
+      <div class="card-title">🌾 <span data-key="recommended_crops">Recommended Crops</span>
+        <span class="tag tag-green" style="margin-left:auto;" id="recommendation-context"></span>
+      </div>
+      <div class="crop-options" id="crop-options-grid"></div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-gold" id="select-btn" onclick="selectCrop()" disabled>
+          ✅ <span data-key="btn_proceed">Proceed with Selected Crop</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="crop-detail-section" class="hidden">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="card-title" style="margin-bottom:4px;" id="detail-crop-name">🌽 Maize</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="detail-tags"></div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="goBack()" data-key="btn_back">← Back</button>
+      </div>
+      <div class="detail-tabs">
+        <button class="dtab active" onclick="showDtab('cost',this)" data-key="dtab_cost">💰 Cost Breakdown</button>
+        <button class="dtab" onclick="showDtab('compare',this)" data-key="dtab_compare">📊 Compare</button>
+        <button class="dtab" onclick="showDtab('companion',this)" data-key="dtab_companion">🌿 Companion Crops</button>
+        <button class="dtab" onclick="showDtab('pests',this)" data-key="dtab_pests">🐛 Pests</button>
+        <button class="dtab" onclick="showDtab('price',this)" data-key="dtab_price">📈 Price Forecast</button>
+      </div>
+      <div class="detail-pane active" id="dpane-cost">
+        <div class="timeline" id="cost-timeline"></div>
+        <div style="margin-top:16px;background:#f0fdf4;border-radius:12px;padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;color:var(--green-dark);" data-key="total_invest">Total Investment</span>
+            <span id="total-cost" style="font-size:1.15rem;font-weight:800;color:var(--earth);"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;">
+            <span style="font-weight:600;color:var(--green-dark);" data-key="exp_rev">Expected Revenue</span>
+            <span id="total-revenue" style="font-size:1.15rem;font-weight:800;color:var(--green-mid);"></span>
+          </div>
+          <div class="divider" style="margin:10px 0;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;color:var(--green-dark);" data-key="net_profit">Net Profit</span>
+            <span id="net-profit" style="font-size:1.2rem;font-weight:800;color:var(--green-mid);"></span>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <p style="font-size:0.8rem;color:var(--muted);" data-key="where_buy">💡 Where to buy inputs:</p>
+          <div id="where-to-buy" style="margin-top:6px;font-size:0.83rem;color:var(--green-dark);line-height:1.7;"></div>
+        </div>
+      </div>
+      <div class="detail-pane" id="dpane-compare">
+        <table class="compare-table" id="compare-table"></table>
+      </div>
+      <div class="detail-pane" id="dpane-companion">
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;"><span data-key="companion_intro">Grow these alongside</span> <strong id="companion-main-crop"></strong><span data-key="companion_intro_suffix"> to increase yield &amp; reduce pests:</span></p>
+        <div class="companion-grid" id="companion-grid"></div>
+      </div>
+      <div class="detail-pane" id="dpane-pests">
+        <div class="pest-grid" id="pest-grid"></div>
+      </div>
+      <div class="detail-pane" id="dpane-price">
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;" data-key="price_intro">Best time to sell highlighted in gold. Plan your harvest accordingly:</p>
+        <div class="price-chart" id="price-chart"></div>
+        <div style="margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:11px 13px;font-size:0.83rem;">
+          🏆 <span id="best-sell-time" style="font-weight:600;color:var(--earth);"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ PLANT DOCTOR ════════════════════ -->
+<div id="tab-plant" class="section">
+  <div class="hero">
+    <div class="hero-title" data-key="plant_hero_title">Plant Doctor</div>
+    <div class="hero-sub" data-key="plant_hero_sub">Describe your plant issue and/or upload a photo</div>
+  </div>
+  <div class="card" style="margin-top:18px;">
+    <div class="card-title">🌿 <span data-key="plant_problem_title">Describe the Problem</span></div>
+
+    <div class="form-group" style="margin-bottom:12px;">
+      <label data-key="lbl_plant_name">Plant / Crop Name</label>
+      <div class="mic-input-wrap">
+        <input type="text" id="plant-name" data-key-placeholder="ph_plant_name" placeholder="e.g. Tomato, Wheat, Rice…">
+        <button class="mic-btn" onclick="startMic('plant-name','plant_name_lang')" title="Speak plant name">🎤</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px;">
+      <label data-key="lbl_plant_issue">Describe the Issue</label>
+      <div class="mic-input-wrap">
+        <textarea id="plant-issue" data-key-placeholder="ph_plant_issue" placeholder="e.g. Yellow spots on leaves, wilting, white powder on stems…"></textarea>
+        <button class="mic-btn mic-btn-textarea" onclick="startMic('plant-issue','plant_issue_lang')" title="Speak your issue">🎤</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label data-key="lbl_upload">Upload Photo (Optional)</label>
+      <div class="upload-zone">
+        <input type="file" accept="image/*" onchange="previewImage(this)" id="plant-image-input">
+        <div style="font-size:2.2rem;margin-bottom:6px;">📸</div>
+        <div style="color:var(--muted);font-size:0.87rem;" data-key="upload_hint">Click or drag to upload plant photo</div>
+        <img id="preview-img" alt="Preview">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="diagnose-btn" onclick="diagnosePlant()">
+      <span id="diagnose-icon">🔬</span> <span data-key="btn_diagnose">Diagnose Plant Issue</span>
+    </button>
+  </div>
+  <div class="ai-response" id="plant-response">
+    <div class="ai-label">🤖 <span data-key="ai_diagnosis">AI Diagnosis</span></div>
+    <div class="ai-text" id="plant-response-text"></div>
+  </div>
+</div>
+
+<!-- ════════════════════ SELL PRODUCE ════════════════════ -->
+<div id="tab-market" class="section">
+  <div class="hero">
+    <div class="hero-title" data-key="market_hero_title">Sell Your Produce</div>
+    <div class="hero-sub" data-key="market_hero_sub">Direct platforms — No Middleman</div>
+  </div>
+  <div class="card" style="margin-top:18px;">
+    <div class="card-title">🏛️ <span data-key="govt_platforms">Government Platforms</span></div>
+    <div class="sell-grid">
+      <div class="sell-card gov"><div class="sell-tag gov">GOVERNMENT</div><div class="sell-name">eNAM</div><div class="sell-info" data-key="enam_info">National online trading platform. Transparent price discovery.</div><div class="no-middleman">✅ No Middleman</div></div>
+      <div class="sell-card gov"><div class="sell-tag gov">GOVERNMENT</div><div class="sell-name">APMC e-Auctions</div><div class="sell-info" data-key="apmc_info">State market committee direct farmer-to-buyer auctions.</div><div class="no-middleman">✅ Direct Auction</div></div>
+      <div class="sell-card gov"><div class="sell-tag gov">GOVERNMENT</div><div class="sell-name">Kisan Suvidha App</div><div class="sell-info" data-key="ksuvidha_info">Market prices, weather, advisories, and selling links.</div><div class="no-middleman">✅ Free App</div></div>
+      <div class="sell-card gov"><div class="sell-tag gov">GOVERNMENT</div><div class="sell-name">SFAC</div><div class="sell-info" data-key="sfac_info">Links farmers to bulk buyers & exports with assured prices.</div><div class="no-middleman">✅ Assured Price</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏢 <span data-key="pvt_platforms">Private Platforms</span></div>
+    <div class="sell-grid">
+      <div class="sell-card pvt"><div class="sell-tag pvt">PRIVATE</div><div class="sell-name">DeHaat</div><div class="sell-info" data-key="dehaat_info">End-to-end agri service — inputs, advisory, produce selling.</div><div class="no-middleman">✅ Direct Buy</div></div>
+      <div class="sell-card pvt"><div class="sell-tag pvt">PRIVATE</div><div class="sell-name">Ninjacart</div><div class="sell-info" data-key="ninjacart_info">Fresh produce supply chain — 10-20% better price vs mandi.</div><div class="no-middleman">✅ Better Price</div></div>
+      <div class="sell-card pvt"><div class="sell-tag pvt">PRIVATE</div><div class="sell-name">AgroStar</div><div class="sell-info" data-key="agrostar_info">Online agri marketplace — sell crops, buy inputs, get advice.</div><div class="no-middleman">✅ Expert Advice</div></div>
+      <div class="sell-card pvt"><div class="sell-tag pvt">PRIVATE</div><div class="sell-name">BigBasket</div><div class="sell-info" data-key="bigbasket_info">Direct procurement from farmers for vegetables & fruits.</div><div class="no-middleman">✅ Quick Pickup</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ SUBSIDIES (LIVE) ════════════════════ -->
+<div id="tab-subsidy" class="section">
+  <div class="hero">
+    <div class="hero-title" data-key="subsidy_hero_title">Subsidies & Benefits</div>
+    <div class="hero-sub" data-key="subsidy_hero_sub">Latest government schemes — updated live by AI</div>
+  </div>
+  <div class="card" style="margin-top:18px;">
+    <div class="card-title">
+      💰 <span data-key="major_benefits">Major Farmer Benefits</span>
+      <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+    </div>
+    <div style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <select id="subsidy-state" style="max-width:200px;">
+        <option value="national" data-key="sel_national">All India (National)</option>
+        <option value="Punjab">Punjab</option><option value="Maharashtra">Maharashtra</option>
+        <option value="Telangana">Telangana</option><option value="Andhra Pradesh">Andhra Pradesh</option>
+        <option value="Gujarat">Gujarat</option><option value="West Bengal">West Bengal</option>
+        <option value="Odisha">Odisha</option><option value="Assam">Assam</option>
+        <option value="Uttar Pradesh">Uttar Pradesh</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="fetchLiveSubsidies()" id="subsidy-fetch-btn">
+        <span id="subsidy-fetch-icon">🔄</span> <span data-key="btn_fetch_subsidies">Fetch Latest Schemes</span>
+      </button>
+    </div>
+    <div id="subsidy-list-container">
+      <!-- Static fallback shown initially -->
+      <div class="subsidy-list" id="subsidy-list">
+        <div class="subsidy-item"><div class="subsidy-icon">💵</div><div><div class="subsidy-name">PM-KISAN</div><div class="subsidy-desc" data-key="pmkisan_desc">Direct income support in 3 installments per year.</div><div class="subsidy-amt">₹6,000 / year</div></div></div>
+        <div class="subsidy-item"><div class="subsidy-icon">🌧️</div><div><div class="subsidy-name">PMFBY</div><div class="subsidy-desc" data-key="pmfby_desc">Crop insurance against natural calamities & pests.</div><div class="subsidy-amt">Premium: 1.5%–5%</div></div></div>
+        <div class="subsidy-item"><div class="subsidy-icon">💧</div><div><div class="subsidy-name">PMKSY</div><div class="subsidy-desc" data-key="pmksy_desc">Micro-irrigation subsidy up to 55% for small farmers.</div><div class="subsidy-amt">Up to 55% subsidy</div></div></div>
+        <div class="subsidy-item"><div class="subsidy-icon">🚜</div><div><div class="subsidy-name">SMAM</div><div class="subsidy-desc" data-key="smam_desc">Subsidy on tractors & farm equipment for small farmers.</div><div class="subsidy-amt">25%–50% subsidy</div></div></div>
+        <div class="subsidy-item"><div class="subsidy-icon">🏦</div><div><div class="subsidy-name">Kisan Credit Card</div><div class="subsidy-desc" data-key="kcc_desc">Short-term crop loans at 4% effective interest rate.</div><div class="subsidy-amt">4% interest rate</div></div></div>
+        <div class="subsidy-item"><div class="subsidy-icon">☀️</div><div><div class="subsidy-name">PM-KUSUM</div><div class="subsidy-desc" data-key="kusum_desc">Solar pump scheme — 60% subsidy + earn from grid power.</div><div class="subsidy-amt">60% subsidy</div></div></div>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:10px;" data-key="subsidy_note">👆 Click "Fetch Latest Schemes" to load AI-powered live updates for your state</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// TRANSLATIONS — ALL 8 LANGUAGES
+// ═══════════════════════════════════════════════
+const T = {
+  en: {
+    tab_crop:'🌱 Crop Advisor', tab_plant:'🔬 Plant Doctor', tab_market:'🏪 Sell Produce', tab_subsidy:'💰 Subsidies',
+    crop_hero_title:'Smart Crop Advisor', crop_hero_sub:'AI-powered recommendations tailored to your farm',
+    farmer_details:'Farmer Details', lbl_region:'Region / State', lbl_soil:'Soil Type', lbl_season:'Season', lbl_budget:'Budget (₹)',
+    sel_region:'Select region…', sel_soil:'Select soil type…', sel_season:'Select season…', sel_budget:'Select budget…',
+    btn_generate:'Generate Crop Options', recommended_crops:'Recommended Crops', btn_proceed:'Proceed with Selected Crop',
+    btn_back:'← Back', dtab_cost:'💰 Cost Breakdown', dtab_compare:'📊 Compare', dtab_companion:'🌿 Companion Crops', dtab_pests:'🐛 Pests', dtab_price:'📈 Price Forecast',
+    total_invest:'Total Investment', exp_rev:'Expected Revenue', net_profit:'Net Profit', where_buy:'💡 Where to buy inputs:',
+    plant_hero_title:'Plant Doctor', plant_hero_sub:'Describe your plant issue and/or upload a photo',
+    plant_problem_title:'Describe the Problem', lbl_plant_name:'Plant / Crop Name', lbl_plant_issue:'Describe the Issue',
+    ph_plant_name:'e.g. Tomato, Wheat, Rice…', ph_plant_issue:'e.g. Yellow spots on leaves, wilting, white powder on stems…',
+    lbl_upload:'Upload Photo (Optional)', upload_hint:'Click or drag to upload plant photo',
+    btn_diagnose:'Diagnose Plant Issue', ai_diagnosis:'AI Diagnosis',
+    market_hero_title:'Sell Your Produce', market_hero_sub:'Direct platforms — No Middleman',
+    govt_platforms:'Government Platforms', pvt_platforms:'Private Platforms',
+    enam_info:'National online trading platform. Transparent price discovery.',
+    apmc_info:'State market committee direct farmer-to-buyer auctions.',
+    ksuvidha_info:'Market prices, weather, advisories, and selling links.',
+    sfac_info:'Links farmers to bulk buyers & exports with assured prices.',
+    dehaat_info:'End-to-end agri service — inputs, advisory, produce selling.',
+    ninjacart_info:'Fresh produce supply chain — 10-20% better price vs mandi.',
+    agrostar_info:'Online agri marketplace — sell crops, buy inputs, get advice.',
+    bigbasket_info:'Direct procurement from farmers for vegetables & fruits.',
+    subsidy_hero_title:'Subsidies & Benefits', subsidy_hero_sub:'Latest government schemes — updated live by AI',
+    major_benefits:'Major Farmer Benefits', sel_national:'All India (National)',
+    btn_fetch_subsidies:'Fetch Latest Schemes',
+    pmkisan_desc:'Direct income support in 3 installments per year.',
+    pmfby_desc:'Crop insurance against natural calamities & pests.',
+    pmksy_desc:'Micro-irrigation subsidy up to 55% for small farmers.',
+    smam_desc:'Subsidy on tractors & farm equipment for small farmers.',
+    kcc_desc:'Short-term crop loans at 4% effective interest rate.',
+    kusum_desc:'Solar pump scheme — 60% subsidy + earn from grid power.',
+    subsidy_note:'👆 Click "Fetch Latest Schemes" to load AI-powered live updates',
+    companion_intro:'Grow these alongside',
+    companion_intro_suffix:' to increase yield & reduce pests:',
+    price_intro:'Best time to sell highlighted in gold. Plan your harvest accordingly:',
+    mic_listening:'Listening… Speak now', mic_done:'Got it!', mic_error:'Mic not supported. Please type.',
+  },
+  hi: {
+    tab_crop:'🌱 फसल सलाह', tab_plant:'🔬 पौधा डॉक्टर', tab_market:'🏪 उपज बेचें', tab_subsidy:'💰 सब्सिडी',
+    crop_hero_title:'स्मार्ट फसल सलाहकार', crop_hero_sub:'आपके खेत के अनुसार AI सिफारिशें',
+    farmer_details:'किसान विवरण', lbl_region:'क्षेत्र / राज्य', lbl_soil:'मिट्टी का प्रकार', lbl_season:'मौसम', lbl_budget:'बजट (₹)',
+    sel_region:'क्षेत्र चुनें…', sel_soil:'मिट्टी का प्रकार चुनें…', sel_season:'मौसम चुनें…', sel_budget:'बजट चुनें…',
+    btn_generate:'फसल विकल्प जनरेट करें', recommended_crops:'अनुशंसित फसलें', btn_proceed:'चयनित फसल के साथ आगे बढ़ें',
+    btn_back:'← वापस', dtab_cost:'💰 लागत विवरण', dtab_compare:'📊 तुलना', dtab_companion:'🌿 सहयोगी फसलें', dtab_pests:'🐛 कीट', dtab_price:'📈 मूल्य पूर्वानुमान',
+    total_invest:'कुल निवेश', exp_rev:'अपेक्षित आय', net_profit:'शुद्ध लाभ', where_buy:'💡 इनपुट कहाँ से खरीदें:',
+    plant_hero_title:'पौधा डॉक्टर', plant_hero_sub:'अपनी पौधे की समस्या बताएं या फोटो अपलोड करें',
+    plant_problem_title:'समस्या बताएं', lbl_plant_name:'पौधे / फसल का नाम', lbl_plant_issue:'समस्या का विवरण',
+    ph_plant_name:'जैसे टमाटर, गेहूं, चावल…', ph_plant_issue:'जैसे पत्तियों पर पीले धब्बे, मुरझाना…',
+    lbl_upload:'फोटो अपलोड करें (वैकल्पिक)', upload_hint:'पौधे की फोटो अपलोड करने के लिए क्लिक करें',
+    btn_diagnose:'पौधे की समस्या का निदान करें', ai_diagnosis:'AI निदान',
+    market_hero_title:'अपनी उपज बेचें', market_hero_sub:'सीधे मंच — कोई बिचौलिया नहीं',
+    govt_platforms:'सरकारी मंच', pvt_platforms:'निजी मंच',
+    enam_info:'राष्ट्रीय ऑनलाइन कृषि व्यापार मंच।', apmc_info:'राज्य मंडी के सीधे नीलामी।',
+    ksuvidha_info:'बाजार भाव, मौसम, सलाह।', sfac_info:'किसानों को थोक खरीदारों से जोड़ता है।',
+    dehaat_info:'संपूर्ण कृषि सेवा — इनपुट, सलाह, बिक्री।', ninjacart_info:'ताजा उपज — मंडी से 10-20% अधिक मूल्य।',
+    agrostar_info:'ऑनलाइन कृषि बाजार।', bigbasket_info:'किसानों से सब्जियों की सीधी खरीद।',
+    subsidy_hero_title:'सब्सिडी और लाभ', subsidy_hero_sub:'AI द्वारा लाइव अपडेट की गई नवीनतम योजनाएं',
+    major_benefits:'प्रमुख किसान लाभ', sel_national:'संपूर्ण भारत (राष्ट्रीय)',
+    btn_fetch_subsidies:'नवीनतम योजनाएं प्राप्त करें',
+    pmkisan_desc:'प्रतिवर्ष 3 किस्तों में सीधी आय सहायता।', pmfby_desc:'प्राकृतिक आपदा व कीटों के विरुद्ध फसल बीमा।',
+    pmksy_desc:'छोटे किसानों के लिए 55% तक सूक्ष्म सिंचाई सब्सिडी।',
+    smam_desc:'छोटे किसानों के लिए ट्रैक्टर व उपकरण सब्सिडी।',
+    kcc_desc:'4% प्रभावी ब्याज पर अल्पकालिक फसल ऋण।',
+    kusum_desc:'सौर पंप योजना — 60% सब्सिडी + बिजली बेचकर आय।',
+    subsidy_note:'👆 अपने राज्य की नवीनतम योजनाओं के लिए "नवीनतम योजनाएं प्राप्त करें" क्लिक करें',
+    companion_intro:'इनके साथ उगाएं',
+    companion_intro_suffix:' उपज बढ़ाने और कीट कम करने के लिए:',
+    price_intro:'सोने में हाइलाइट किया गया सबसे अच्छा बिक्री समय:',
+    mic_listening:'सुन रहा हूँ… अभी बोलें', mic_done:'समझ लिया!', mic_error:'माइक समर्थित नहीं। कृपया टाइप करें।',
+  },
+  te: {
+    tab_crop:'🌱 పంట సలహా', tab_plant:'🔬 మొక్క డాక్టర్', tab_market:'🏪 పంట అమ్మండి', tab_subsidy:'💰 సబ్సిడీలు',
+    crop_hero_title:'స్మార్ట్ పంట సలహాదారు', crop_hero_sub:'మీ పొలానికి AI సిఫార్సులు',
+    farmer_details:'రైతు వివరాలు', lbl_region:'ప్రాంతం / రాష్ట్రం', lbl_soil:'నేల రకం', lbl_season:'సీజన్', lbl_budget:'బడ్జెట్ (₹)',
+    sel_region:'ప్రాంతం ఎంచుకోండి…', sel_soil:'నేల రకం ఎంచుకోండి…', sel_season:'సీజన్ ఎంచుకోండి…', sel_budget:'బడ్జెట్ ఎంచుకోండి…',
+    btn_generate:'పంట ఎంపికలు రూపొందించండి', recommended_crops:'సిఫార్సు చేయబడిన పంటలు', btn_proceed:'ఎంచుకున్న పంటతో కొనసాగండి',
+    btn_back:'← వెనుకకు', dtab_cost:'💰 ఖర్చు వివరాలు', dtab_compare:'📊 పోల్చండి', dtab_companion:'🌿 సహ పంటలు', dtab_pests:'🐛 తెగుళ్లు', dtab_price:'📈 ధర అంచనా',
+    total_invest:'మొత్తం పెట్టుబడి', exp_rev:'అంచనా ఆదాయం', net_profit:'నికర లాభం', where_buy:'💡 ఇన్‌పుట్‌లు ఎక్కడ కొనాలి:',
+    plant_hero_title:'మొక్క డాక్టర్', plant_hero_sub:'మీ మొక్క సమస్యను వివరించండి లేదా ఫోటో అప్‌లోడ్ చేయండి',
+    plant_problem_title:'సమస్యను వివరించండి', lbl_plant_name:'మొక్క / పంట పేరు', lbl_plant_issue:'సమస్య వివరణ',
+    ph_plant_name:'ఉదా. టమాటా, గోధుమ, వరి…', ph_plant_issue:'ఉదా. ఆకులపై పసుపు మచ్చలు, వాడిపోవడం…',
+    lbl_upload:'ఫోటో అప్‌లోడ్ చేయండి (ఐచ్ఛికం)', upload_hint:'మొక్క ఫోటోను అప్‌లోడ్ చేయడానికి క్లిక్ చేయండి',
+    btn_diagnose:'మొక్క సమస్యను నిర్ధారించండి', ai_diagnosis:'AI నిర్ధారణ',
+    market_hero_title:'మీ దిగుబడిని అమ్మండి', market_hero_sub:'నేరుగా — మధ్యవర్తి లేదు',
+    govt_platforms:'ప్రభుత్వ వేదికలు', pvt_platforms:'ప్రైవేట్ వేదికలు',
+    enam_info:'జాతీయ ఆన్‌లైన్ వ్యవసాయ వ్యాపార వేదిక.',
+    apmc_info:'రాష్ట్ర మార్కెట్ కమిటీ నేరుగా వేలం.',
+    ksuvidha_info:'మార్కెట్ ధరలు, వాతావరణం, సలహాలు.',
+    sfac_info:'రైతులను గొప్ప కొనుగోలుదారులతో అనుసంధానిస్తుంది.',
+    dehaat_info:'సమగ్ర వ్యవసాయ సేవ — ఇన్‌పుట్, సలహా, అమ్మకాలు.',
+    ninjacart_info:'తాజా దిగుబడి — మండి కంటే 10-20% ఎక్కువ ధర.',
+    agrostar_info:'ఆన్‌లైన్ వ్యవసాయ మార్కెట్‌ప్లేస్.',
+    bigbasket_info:'రైతుల నుండి నేరుగా కూరగాయలు కొనుగోలు.',
+    subsidy_hero_title:'సబ్సిడీలు & ప్రయోజనాలు', subsidy_hero_sub:'AI ద్వారా లైవ్ అప్‌డేట్ చేయబడిన తాజా పథకాలు',
+    major_benefits:'ప్రధాన రైతు ప్రయోజనాలు', sel_national:'మొత్తం భారతదేశం (జాతీయ)',
+    btn_fetch_subsidies:'తాజా పథకాలు తెప్పించండి',
+    pmkisan_desc:'సంవత్సరానికి 3 వాయిదాలలో నేరుగా ఆదాయ మద్దతు.',
+    pmfby_desc:'సహజ వైపరీత్యాలు & తెగుళ్ల నుండి పంట బీమా.',
+    pmksy_desc:'చిన్న రైతులకు 55% వరకు మైక్రో-ఇరిగేషన్ సబ్సిడీ.',
+    smam_desc:'చిన్న రైతులకు ట్రాక్టర్ & యంత్రాల సబ్సిడీ.',
+    kcc_desc:'4% వడ్డీకి స్వల్పకాలిక పంట రుణాలు.',
+    kusum_desc:'సోలార్ పంప్ — 60% సబ్సిడీ + విద్యుత్ అమ్మి ఆదాయం.',
+    subsidy_note:'👆 మీ రాష్ట్ర తాజా పథకాల కోసం క్లిక్ చేయండి',
+    companion_intro:'వీటిని కలిపి పెంచండి',
+    companion_intro_suffix:' దిగుబడి పెంచడానికి & తెగుళ్లు తగ్గించడానికి:',
+    price_intro:'అమ్మకానికి ఉత్తమ సమయం బంగారు రంగులో హైలైట్ చేయబడింది:',
+    mic_listening:'వింటున్నాను… ఇప్పుడు మాట్లాడండి', mic_done:'అర్థమైంది!', mic_error:'మైక్ మద్దతు లేదు. దయచేసి టైప్ చేయండి.',
+  },
+  mr: {
+    tab_crop:'🌱 पीक सल्ला', tab_plant:'🔬 वनस्पती डॉक्टर', tab_market:'🏪 पीक विका', tab_subsidy:'💰 अनुदान',
+    crop_hero_title:'स्मार्ट पीक सल्लागार', crop_hero_sub:'आपल्या शेताला अनुकूल AI शिफारसी',
+    farmer_details:'शेतकरी तपशील', lbl_region:'प्रदेश / राज्य', lbl_soil:'मातीचा प्रकार', lbl_season:'हंगाम', lbl_budget:'बजेट (₹)',
+    sel_region:'प्रदेश निवडा…', sel_soil:'मातीचा प्रकार निवडा…', sel_season:'हंगाम निवडा…', sel_budget:'बजेट निवडा…',
+    btn_generate:'पीक पर्याय तयार करा', recommended_crops:'शिफारस केलेली पिके', btn_proceed:'निवडलेल्या पिकाने पुढे जा',
+    btn_back:'← मागे', dtab_cost:'💰 खर्च तपशील', dtab_compare:'📊 तुलना', dtab_companion:'🌿 सहयोगी पिके', dtab_pests:'🐛 कीड', dtab_price:'📈 किंमत अंदाज',
+    total_invest:'एकूण गुंतवणूक', exp_rev:'अपेक्षित उत्पन्न', net_profit:'निव्वळ नफा', where_buy:'💡 निविष्टा कोठे खरेदी करायची:',
+    plant_hero_title:'वनस्पती डॉक्टर', plant_hero_sub:'आपली वनस्पती समस्या सांगा किंवा फोटो अपलोड करा',
+    plant_problem_title:'समस्या सांगा', lbl_plant_name:'वनस्पती / पीक नाव', lbl_plant_issue:'समस्येचे वर्णन',
+    ph_plant_name:'उदा. टोमॅटो, गहू, तांदूळ…', ph_plant_issue:'उदा. पानांवर पिवळे डाग, मरगळणे…',
+    lbl_upload:'फोटो अपलोड करा (पर्यायी)', upload_hint:'वनस्पती फोटो अपलोड करण्यासाठी क्लिक करा',
+    btn_diagnose:'वनस्पती समस्येचे निदान करा', ai_diagnosis:'AI निदान',
+    market_hero_title:'आपले पीक विका', market_hero_sub:'थेट व्यासपीठे — कोणताही दलाल नाही',
+    govt_platforms:'सरकारी व्यासपीठे', pvt_platforms:'खाजगी व्यासपीठे',
+    enam_info:'राष्ट्रीय ऑनलाइन कृषी व्यापार व्यासपीठ.',
+    apmc_info:'राज्य बाजार समितीची थेट लिलाव.',
+    ksuvidha_info:'बाजार भाव, हवामान, सल्ला.',
+    sfac_info:'शेतकऱ्यांना मोठ्या खरेदीदारांशी जोडते.',
+    dehaat_info:'संपूर्ण कृषी सेवा — निविष्टा, सल्ला, विक्री.',
+    ninjacart_info:'ताजे उत्पादन — मंडईपेक्षा 10-20% जास्त दर.',
+    agrostar_info:'ऑनलाइन कृषी बाजार.',
+    bigbasket_info:'शेतकऱ्यांकडून थेट भाज्यांची खरेदी.',
+    subsidy_hero_title:'अनुदाने व लाभ', subsidy_hero_sub:'AI द्वारे थेट अद्ययावत नवीनतम योजना',
+    major_benefits:'प्रमुख शेतकरी लाभ', sel_national:'संपूर्ण भारत (राष्ट्रीय)',
+    btn_fetch_subsidies:'नवीनतम योजना मिळवा',
+    pmkisan_desc:'वर्षातून 3 हप्त्यांमध्ये थेट उत्पन्न मदत.',
+    pmfby_desc:'नैसर्गिक आपत्ती व कीटकांपासून पीक विमा.',
+    pmksy_desc:'लहान शेतकऱ्यांना 55% पर्यंत सूक्ष्म सिंचन अनुदान.',
+    smam_desc:'लहान शेतकऱ्यांना ट्रॅक्टर व उपकरणे अनुदान.',
+    kcc_desc:'4% व्याजावर अल्पकालीन पीक कर्ज.',
+    kusum_desc:'सौर पंप योजना — 60% अनुदान + वीज विक्रीतून उत्पन्न.',
+    subsidy_note:'👆 आपल्या राज्याच्या नवीनतम योजनांसाठी क्लिक करा',
+    companion_intro:'एकत्र लावा',
+    companion_intro_suffix:' उत्पन्न वाढवण्यासाठी आणि कीड कमी करण्यासाठी:',
+    price_intro:'विक्रीसाठी सर्वोत्तम वेळ सोन्याने हायलाइट केलेला आहे:',
+    mic_listening:'ऐकत आहे… आता बोला', mic_done:'समजले!', mic_error:'मायक समर्थित नाही. कृपया टाइप करा.',
+  },
+  gu: {
+    tab_crop:'🌱 પાક સલાહ', tab_plant:'🔬 છોડ ડૉક્ટર', tab_market:'🏪 પાક વેચો', tab_subsidy:'💰 સહાય',
+    crop_hero_title:'સ્માર્ટ પાક સલાહકાર', crop_hero_sub:'તમારા ખેત માટે AI ભલામણો',
+    farmer_details:'ખેડૂત વિગત', lbl_region:'પ્રદેશ / રાજ્ય', lbl_soil:'જમીનનો પ્રકાર', lbl_season:'ઋતુ', lbl_budget:'બજેટ (₹)',
+    sel_region:'પ્રદેશ પસંદ કરો…', sel_soil:'જમીનનો પ્રકાર પસંદ કરો…', sel_season:'ઋતુ પસંદ કરો…', sel_budget:'બજેટ પસંદ કરો…',
+    btn_generate:'પાક વિકલ્પો બનાવો', recommended_crops:'ભલામણ કરેલ પાક', btn_proceed:'પસંદ કરેલ પાક સાથે આગળ વધો',
+    btn_back:'← પાછા', dtab_cost:'💰 ખર્ચ વિગત', dtab_compare:'📊 સરખામણી', dtab_companion:'🌿 સાથી પાક', dtab_pests:'🐛 જીવાત', dtab_price:'📈 ભાવ અનુમાન',
+    total_invest:'કુલ રોકાણ', exp_rev:'અપેક્ષિત આવક', net_profit:'ચોખ્ખો નફો', where_buy:'💡 ઇનપુટ ક્યાંથી ખરીદવા:',
+    plant_hero_title:'છોડ ડૉક્ટર', plant_hero_sub:'છોડની સમસ્યા જણાવો અથવા ફોટો અપલોડ કરો',
+    plant_problem_title:'સમસ્યા જણાવો', lbl_plant_name:'છોડ / પાકનું નામ', lbl_plant_issue:'સમસ્યાનું વર્ણન',
+    ph_plant_name:'દા.ત. ટામેટા, ઘઉં, ડાંગર…', ph_plant_issue:'દા.ત. પાન પર પીળા ડાઘ, કરમાવું…',
+    lbl_upload:'ફોટો અપલોડ કરો (વૈકલ્પિક)', upload_hint:'છોડની ફોટો અપલોડ કરવા ક્લિક કરો',
+    btn_diagnose:'છોડની સમસ્યા નિદાન કરો', ai_diagnosis:'AI નિદાન',
+    market_hero_title:'તમારો પાક વેચો', market_hero_sub:'સીધા પ્લેટફોર્મ — કોઈ દલાલ નહીં',
+    govt_platforms:'સરકારી પ્લેટફોર્મ', pvt_platforms:'ખાનગી પ્લેટફોર્મ',
+    enam_info:'રાષ્ટ્રીય ઓનલાઇન કૃષિ ટ્રેડિંગ પ્લેટફોર્મ.',
+    apmc_info:'રાજ્ય બજાર સમિતિ સીધી હરરાજ.',
+    ksuvidha_info:'બજાર ભાવ, હવામાન, સલાહ.',
+    sfac_info:'ખેડૂતોને મોટા ખરીદારો સાથે જોડે.',
+    dehaat_info:'સંપૂર્ણ કૃષિ સેવા — ઇનપુટ, સલાહ, વેચાણ.',
+    ninjacart_info:'તાજી પેદાશ — મંડી કરતા 10-20% સારો ભાવ.',
+    agrostar_info:'ઓનલાઇન કૃષિ બજાર.',
+    bigbasket_info:'ખેડૂતો પાસેથી સીધી શાકભાજી ખરીદી.',
+    subsidy_hero_title:'સહાય અને લાભ', subsidy_hero_sub:'AI દ્વારા લાઇવ અપડેટ થયેલ નવીનતમ યોજનાઓ',
+    major_benefits:'મુખ્ય ખેડૂત લાભ', sel_national:'સમગ્ર ભારત (રાષ્ટ્રીય)',
+    btn_fetch_subsidies:'નવીનતમ યોજનાઓ મેળવો',
+    pmkisan_desc:'વર્ષ દરમ્યાન 3 હપ્તામાં સીધી આવક સહાય.',
+    pmfby_desc:'કુદરતી આપત્તિ અને જીવાત સામે પાક વીમો.',
+    pmksy_desc:'નાના ખેડૂતો માટે 55% સુધી સૂક્ષ્મ સિંચાઈ સહાય.',
+    smam_desc:'નાના ખેડૂતો માટે ટ્રેક્ટર અને ઉપકરણ સહાય.',
+    kcc_desc:'4% વ્યાજ પર ટૂંકા ગાળાની પાક ઋણ.',
+    kusum_desc:'સૌર પંપ — 60% સહાય + વીજળી વેચીને આવક.',
+    subsidy_note:'👆 તમારા રાજ્યની નવીનતમ યોજનાઓ માટે ક્લિક કરો',
+    companion_intro:'સાથે ઉગાડો',
+    companion_intro_suffix:' ઉત્પાદન વધારવા અને જીવાત ઘટાડવા:',
+    price_intro:'વેચાણ માટે શ્રેષ્ઠ સમય સોનેરી રંગમાં હાઇલાઇટ:',
+    mic_listening:'સાંભળી રહ્યો છું… હવે બોલો', mic_done:'સમજ્યો!', mic_error:'માઇક સમર્થિત નથી. ટાઇપ કરો.',
+  },
+  bn: {
+    tab_crop:'🌱 ফসল পরামর্শ', tab_plant:'🔬 গাছ ডাক্তার', tab_market:'🏪 ফসল বেচুন', tab_subsidy:'💰 ভর্তুকি',
+    crop_hero_title:'স্মার্ট ফসল পরামর্শদাতা', crop_hero_sub:'আপনার খামারের জন্য AI সুপারিশ',
+    farmer_details:'কৃষক তথ্য', lbl_region:'অঞ্চল / রাজ্য', lbl_soil:'মাটির ধরন', lbl_season:'মৌসুম', lbl_budget:'বাজেট (₹)',
+    sel_region:'অঞ্চল বেছে নিন…', sel_soil:'মাটির ধরন বেছে নিন…', sel_season:'মৌসুম বেছে নিন…', sel_budget:'বাজেট বেছে নিন…',
+    btn_generate:'ফসলের বিকল্প তৈরি করুন', recommended_crops:'প্রস্তাবিত ফসল', btn_proceed:'নির্বাচিত ফসলের সাথে এগিয়ে যান',
+    btn_back:'← পিছনে', dtab_cost:'💰 খরচের বিবরণ', dtab_compare:'📊 তুলনা', dtab_companion:'🌿 সঙ্গী ফসল', dtab_pests:'🐛 কীটপতঙ্গ', dtab_price:'📈 মূল্য পূর্বাভাস',
+    total_invest:'মোট বিনিয়োগ', exp_rev:'প্রত্যাশিত আয়', net_profit:'নিট মুনাফা', where_buy:'💡 উপকরণ কোথায় কিনবেন:',
+    plant_hero_title:'গাছ ডাক্তার', plant_hero_sub:'আপনার গাছের সমস্যা বর্ণনা করুন বা ফোটো আপলোড করুন',
+    plant_problem_title:'সমস্যা বর্ণনা করুন', lbl_plant_name:'গাছ / ফসলের নাম', lbl_plant_issue:'সমস্যার বিবরণ',
+    ph_plant_name:'যেমন টমেটো, গম, ধান…', ph_plant_issue:'যেমন পাতায় হলুদ দাগ, নেতিয়ে পড়া…',
+    lbl_upload:'ফোটো আপলোড করুন (ঐচ্ছিক)', upload_hint:'গাছের ফোটো আপলোড করতে ক্লিক করুন',
+    btn_diagnose:'গাছের সমস্যা নির্ণয় করুন', ai_diagnosis:'AI রোগ নির্ণয়',
+    market_hero_title:'আপনার ফসল বেচুন', market_hero_sub:'সরাসরি প্ল্যাটফর্ম — কোনো মধ্যস্থতাকারী নেই',
+    govt_platforms:'সরকারি প্ল্যাটফর্ম', pvt_platforms:'বেসরকারি প্ল্যাটফর্ম',
+    enam_info:'জাতীয় অনলাইন কৃষি ট্রেডিং প্ল্যাটফর্ম।',
+    apmc_info:'রাজ্য বাজার কমিটির সরাসরি নিলাম।',
+    ksuvidha_info:'বাজার মূল্য, আবহাওয়া, পরামর্শ।',
+    sfac_info:'কৃষকদের বড় ক্রেতাদের সাথে সংযুক্ত করে।',
+    dehaat_info:'সম্পূর্ণ কৃষি সেবা — উপকরণ, পরামর্শ, বিক্রয়।',
+    ninjacart_info:'তাজা পণ্য — মান্ডির চেয়ে 10-20% বেশি দাম।',
+    agrostar_info:'অনলাইন কৃষি বাজার।',
+    bigbasket_info:'কৃষকদের কাছ থেকে সরাসরি সবজি ক্রয়।',
+    subsidy_hero_title:'ভর্তুকি ও সুবিধা', subsidy_hero_sub:'AI দ্বারা লাইভ আপডেট করা সর্বশেষ প্রকল্প',
+    major_benefits:'প্রধান কৃষক সুবিধা', sel_national:'সমগ্র ভারত (জাতীয়)',
+    btn_fetch_subsidies:'সর্বশেষ প্রকল্প আনুন',
+    pmkisan_desc:'বছরে 3 কিস্তিতে সরাসরি আয় সহায়তা।',
+    pmfby_desc:'প্রাকৃতিক দুর্যোগ ও কীটপতঙ্গের বিরুদ্ধে ফসল বীমা।',
+    pmksy_desc:'ক্ষুদ্র কৃষকদের জন্য 55% পর্যন্ত মাইক্রো-সেচ ভর্তুকি।',
+    smam_desc:'ক্ষুদ্র কৃষকদের জন্য ট্র্যাক্টর ও যন্ত্রপাতি ভর্তুকি।',
+    kcc_desc:'4% কার্যকর সুদে স্বল্পমেয়াদী ফসল ঋণ।',
+    kusum_desc:'সৌর পাম্প — 60% ভর্তুকি + বিদ্যুৎ বিক্রি থেকে আয়।',
+    subsidy_note:'👆 আপনার রাজ্যের সর্বশেষ প্রকল্পের জন্য ক্লিক করুন',
+    companion_intro:'এগুলো একসাথে চাষ করুন',
+    companion_intro_suffix:' ফলন বাড়াতে এবং কীটপতঙ্গ কমাতে:',
+    price_intro:'বিক্রির সেরা সময় সোনালি রঙে হাইলাইট করা হয়েছে:',
+    mic_listening:'শুনছি… এখন বলুন', mic_done:'বুঝেছি!', mic_error:'মাইক সমর্থিত নয়। টাইপ করুন।',
+  },
+  or: {
+    tab_crop:'🌱 ଫସଲ ପରାମର୍ଶ', tab_plant:'🔬 ଉଦ୍ଭିଦ ଡାକ୍ତର', tab_market:'🏪 ଫସଲ ବିକ୍ରୟ', tab_subsidy:'💰 ଭର୍ତୁକି',
+    crop_hero_title:'ସ୍ମାର୍ଟ ଫସଲ ପରାମର୍ଶଦାତା', crop_hero_sub:'ଆପଣଙ୍କ ଖେତ ପାଇଁ AI ପରାମର୍ଶ',
+    farmer_details:'କୃଷକ ବିବରଣ', lbl_region:'ଅଞ୍ଚଳ / ରାଜ୍ୟ', lbl_soil:'ମାଟି ପ୍ରକାର', lbl_season:'ଋତୁ', lbl_budget:'ବଜେଟ (₹)',
+    sel_region:'ଅଞ୍ଚଳ ବାଛନ୍ତୁ…', sel_soil:'ମାଟି ପ୍ରକାର ବାଛନ୍ତୁ…', sel_season:'ଋତୁ ବାଛନ୍ତୁ…', sel_budget:'ବଜେଟ ବାଛନ୍ତୁ…',
+    btn_generate:'ଫସଲ ବିକଳ୍ପ ତିଆରି କରନ୍ତୁ', recommended_crops:'ପ୍ରସ୍ତାବିତ ଫସଲ', btn_proceed:'ବାଛିଥିବା ଫସଲ ସହ ଆଗକୁ ଯାନ୍ତୁ',
+    btn_back:'← ଫେରନ୍ତୁ', dtab_cost:'💰 ଖର୍ଚ ବିବରଣ', dtab_compare:'📊 ତୁଳନା', dtab_companion:'🌿 ସାଥୀ ଫସଲ', dtab_pests:'🐛 କୀଟ', dtab_price:'📈 ମୂଲ୍ୟ ଆକଳନ',
+    total_invest:'ମୋଟ ବିନିଯୋଗ', exp_rev:'ଆଶୀର୍ବାଦ ରାଜସ୍ୱ', net_profit:'ନିଟ ଲାଭ', where_buy:'💡 ଇନ୍ପୁଟ କେଉଁଠୁ କିଣିବେ:',
+    plant_hero_title:'ଉଦ୍ଭିଦ ଡାକ୍ତର', plant_hero_sub:'ଆପଣଙ୍କ ଉଦ୍ଭିଦ ସମସ୍ୟା ବର୍ଣ୍ଣନା କରନ୍ତୁ',
+    plant_problem_title:'ସମସ୍ୟା ବର୍ଣ୍ଣନା', lbl_plant_name:'ଉଦ୍ଭିଦ / ଫସଲ ନାମ', lbl_plant_issue:'ସମସ୍ୟାର ବିବରଣ',
+    ph_plant_name:'ଯଥା ଟମାଟୋ, ଗହମ, ଧାନ…', ph_plant_issue:'ଯଥା ପତ୍ରରେ ହଳଦିଆ ଦାଗ, ବଳସ ହୋଇଯିବା…',
+    lbl_upload:'ଫୋଟୋ ଅପ୍ଲୋଡ (ଐଚ୍ଛିକ)', upload_hint:'ଉଦ୍ଭିଦ ଫୋଟୋ ଅପ୍ଲୋଡ ପାଇଁ କ୍ଲିକ୍ କରନ୍ତୁ',
+    btn_diagnose:'ଉଦ୍ଭିଦ ସମସ୍ୟା ନିଦାନ', ai_diagnosis:'AI ନିଦାନ',
+    market_hero_title:'ଆପଣଙ୍କ ଫସଲ ବିକ୍ରୟ କରନ୍ତୁ', market_hero_sub:'ସିଧା ମଞ୍ଚ — କୌଣସି ଦଲ୍ଲାଲ ନାହିଁ',
+    govt_platforms:'ସରକାରୀ ମଞ୍ଚ', pvt_platforms:'ଘରୋଇ ମଞ୍ଚ',
+    enam_info:'ଜାତୀୟ ଅନ୍ଲାଇନ୍ କୃଷି ବ୍ୟାପାର ମଞ୍ଚ।',
+    apmc_info:'ରାଜ୍ୟ ବଜାର ସମିତି ସିଧା ନିଲାମ।',
+    ksuvidha_info:'ବଜାର ମୂଲ୍ୟ, ଆବହାୱା, ପରାମର୍ଶ।',
+    sfac_info:'କୃଷକଙ୍କୁ ବଡ କ୍ରେତାଙ୍କ ସହ ଯୋଡ଼ିଥାଏ।',
+    dehaat_info:'ସମ୍ପୂର୍ଣ ଖୁଚୁରା — ଇନ୍ପୁଟ, ପରାମର୍ଶ, ବିକ୍ରୟ।',
+    ninjacart_info:'ତାଜା ଉତ୍ପାଦ — ମଣ୍ଡି ଠାରୁ 10-20% ଅଧିକ ମୂଲ୍ୟ।',
+    agrostar_info:'ଅନ୍ଲାଇନ୍ କୃଷି ବଜାର।',
+    bigbasket_info:'କୃଷକଙ୍କ ଠାରୁ ସିଧା ପନ୍ରବାଡ଼ି ଖରିଦ।',
+    subsidy_hero_title:'ଭର୍ତୁକି ଓ ଲାଭ', subsidy_hero_sub:'AI ଦ୍ୱାରା ସଜୀବ ଅଦ୍ୟତନ ଯୋଜନା',
+    major_benefits:'ପ୍ରମୁଖ କୃଷକ ଲାଭ', sel_national:'ସମ୍ପୂର୍ଣ ଭାରତ',
+    btn_fetch_subsidies:'ସର୍ବଶେଷ ଯୋଜନା ଆଣନ୍ତୁ',
+    pmkisan_desc:'ବର୍ଷରେ 3 କିସ୍ତିରେ ସିଧା ଆୟ ସହାୟତା।',
+    pmfby_desc:'ପ୍ରାକୃତିକ ବିପର୍ଯ୍ୟୟ ଓ କୀଟ ବିରୁଦ୍ଧ ଫସଲ ବୀମା।',
+    pmksy_desc:'ଛୋଟ କୃଷକଙ୍କ ପାଇଁ 55% ଯାଏଁ ଅଣୁ ଜଳ ସେଚ ଭର୍ତୁକି।',
+    smam_desc:'ଛୋଟ କୃଷକଙ୍କ ପାଇଁ ଟ୍ରାକ୍ଟର ଓ ଯନ୍ତ୍ରପାତି ଭର୍ତୁକି।',
+    kcc_desc:'4% ବ୍ୟାଜରେ ସ୍ୱଳ୍ପ ମିଆଦ ଫସଲ ଋଣ।',
+    kusum_desc:'ସୌର ପମ୍ପ — 60% ଭର୍ତୁକି + ବିଦ୍ୟୁତ ବିକ୍ରୟରୁ ଆୟ।',
+    subsidy_note:'👆 ଆପଣଙ୍କ ରାଜ୍ୟର ସର୍ବଶେଷ ଯୋଜନା ପାଇଁ କ୍ଲିକ୍ କରନ୍ତୁ',
+    companion_intro:'ଏକାଠି ଚାଷ କରନ୍ତୁ',
+    companion_intro_suffix:' ଫସଲ ବଢ଼ାଇବା ଓ କୀଟ କମାଇବାକୁ:',
+    price_intro:'ସୁନା ରଙ୍ଗରେ ସ୍ୱର୍ଣ୍ଣ ଚିହ୍ନିତ ହୋଇଥିବା ବିକ୍ରୟ ସମୟ ସର୍ବୋତ୍ତମ:',
+    mic_listening:'ଶୁଣୁଛି… ବର୍ତ୍ତମାନ ବୋଲନ୍ତୁ', mic_done:'ବୁଝିଲି!', mic_error:'ମାଇକ ସମର୍ଥିତ ନୁହେଁ। ଟାଇପ୍ କରନ୍ତୁ।',
+  },
+  as: {
+    tab_crop:'🌱 শস্য পৰামৰ্শ', tab_plant:'🔬 উদ্ভিদ চিকিৎসক', tab_market:'🏪 শস্য বিক্ৰী', tab_subsidy:'💰 ভৰ্তুকি',
+    crop_hero_title:'স্মাৰ্ট শস্য পৰামৰ্শদাতা', crop_hero_sub:'আপোনাৰ খেতিৰ বাবে AI পৰামৰ্শ',
+    farmer_details:'কৃষক বিৱৰণ', lbl_region:'অঞ্চল / ৰাজ্য', lbl_soil:'মাটিৰ ধৰণ', lbl_season:'ঋতু', lbl_budget:'বাজেট (₹)',
+    sel_region:'অঞ্চল বাছক…', sel_soil:'মাটিৰ ধৰণ বাছক…', sel_season:'ঋতু বাছক…', sel_budget:'বাজেট বাছক…',
+    btn_generate:'শস্যৰ বিকল্প তৈয়াৰ কৰক', recommended_crops:'পৰামৰ্শিত শস্য', btn_proceed:'বাছি লোৱা শস্যৰ সৈতে আগবাঢ়ক',
+    btn_back:'← পিছলৈ', dtab_cost:'💰 খৰচৰ বিৱৰণ', dtab_compare:'📊 তুলনা', dtab_companion:'🌿 সঙ্গী শস্য', dtab_pests:'🐛 পোক-পতঙ্গ', dtab_price:'📈 মূল্য অনুমান',
+    total_invest:'মুঠ বিনিয়োগ', exp_rev:'প্ৰত্যাশিত আয়', net_profit:'নেট মুনাফা', where_buy:'💡 ইনপুট ক\'ত কিনিব:',
+    plant_hero_title:'উদ্ভিদ চিকিৎসক', plant_hero_sub:'আপোনাৰ উদ্ভিদৰ সমস্যা বৰ্ণনা কৰক বা ফটো আপলোড কৰক',
+    plant_problem_title:'সমস্যা বৰ্ণনা কৰক', lbl_plant_name:'উদ্ভিদ / শস্যৰ নাম', lbl_plant_issue:'সমস্যাৰ বিৱৰণ',
+    ph_plant_name:'যেনে টমেটো, ঘেঁহু, ধান…', ph_plant_issue:'যেনে পাতত হালধীয়া দাগ, শুকাই যোৱা…',
+    lbl_upload:'ফটো আপলোড কৰক (ঐচ্ছিক)', upload_hint:'উদ্ভিদৰ ফটো আপলোড কৰিবলৈ ক্লিক কৰক',
+    btn_diagnose:'উদ্ভিদৰ সমস্যা নিৰ্ণয় কৰক', ai_diagnosis:'AI ৰোগ নিৰ্ণয়',
+    market_hero_title:'আপোনাৰ শস্য বিক্ৰী কৰক', market_hero_sub:'প্ৰত্যক্ষ প্লেটফৰ্ম — কোনো দালাল নাই',
+    govt_platforms:'চৰকাৰী প্লেটফৰ্ম', pvt_platforms:'ব্যক্তিগত প্লেটফৰ্ম',
+    enam_info:'ৰাষ্ট্ৰীয় অনলাইন কৃষি ব্যৱসায় প্লেটফৰ্ম।',
+    apmc_info:'ৰাজ্য বজাৰ সমিতিৰ প্ৰত্যক্ষ নিলাম।',
+    ksuvidha_info:'বজাৰ মূল্য, বতৰ, পৰামৰ্শ।',
+    sfac_info:'কৃষকসকলক ডাঙৰ ক্ৰেতাৰ সৈতে সংযোগ কৰে।',
+    dehaat_info:'সম্পূৰ্ণ কৃষি সেৱা — ইনপুট, পৰামৰ্শ, বিক্ৰী।',
+    ninjacart_info:'তাজা শস্য — মাণ্ডিতকৈ 10-20% বেছি দাম।',
+    agrostar_info:'অনলাইন কৃষি বজাৰ।',
+    bigbasket_info:'কৃষকৰ পৰা প্ৰত্যক্ষভাৱে শাক-পাচলি কিনা।',
+    subsidy_hero_title:'ভৰ্তুকি আৰু সুবিধা', subsidy_hero_sub:'AI ৰ দ্বাৰা লাইভ আপডেট কৰা শেহতীয়া আঁচনি',
+    major_benefits:'মুখ্য কৃষক সুবিধা', sel_national:'সমগ্ৰ ভাৰত (ৰাষ্ট্ৰীয়)',
+    btn_fetch_subsidies:'শেহতীয়া আঁচনি আনক',
+    pmkisan_desc:'বছৰত ৩টা কিস্তিত প্ৰত্যক্ষ আয় সহায়তা।',
+    pmfby_desc:'প্ৰাকৃতিক দুৰ্যোগ আৰু পোক-পতঙ্গৰ বিৰুদ্ধে শস্য বীমা।',
+    pmksy_desc:'সৰু কৃষকৰ বাবে ৫৫% লৈকে অণু সেচ ভৰ্তুকি।',
+    smam_desc:'সৰু কৃষকৰ বাবে ট্ৰেক্টৰ আৰু যন্ত্ৰপাতি ভৰ্তুকি।',
+    kcc_desc:'4% সুদত চমু মেয়াদী শস্য ঋণ।',
+    kusum_desc:'সৌৰ পাম্প — 60% ভৰ্তুকি + বিদ্যুৎ বিক্ৰীৰ পৰা আয়।',
+    subsidy_note:'👆 আপোনাৰ ৰাজ্যৰ শেহতীয়া আঁচনিৰ বাবে ক্লিক কৰক',
+    companion_intro:'এক্সামে খেতি কৰক',
+    companion_intro_suffix:' উৎপাদন বঢ়াবলৈ আৰু পোক কমাবলৈ:',
+    price_intro:'সোণালী ৰঙেৰে হাইলাইট কৰা সময়ত বিক্ৰী কৰক:',
+    mic_listening:'শুনি আছো… এতিয়া কওক', mic_done:'বুজিলোঁ!', mic_error:'মাইক সমৰ্থিত নহয়। টাইপ কৰক।',
+  }
+};
+
+// SPEECH LANGUAGE CODES
+const LANG_SPEECH_CODES = {
+  en:'en-IN', hi:'hi-IN', te:'te-IN', mr:'mr-IN', gu:'gu-IN', bn:'bn-IN', or:'or-IN', as:'as-IN'
+};
+
+let currentLang = 'en';
+let selectedCrop = null;
+let currentCrops = [];
+let micRecognition = null;
+
+// ═══════════════════════════════ LANGUAGE SWITCHING ═══════════════════════════════
+function setLang(lang, btn) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const t = T[currentLang] || T.en;
+
+  // Text content — skip inputs, selects, textareas which don't have textContent
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    if (t[key] === undefined) return;
+    const tag = el.tagName.toLowerCase();
+    // Skip form elements
+    if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+    // Skip elements that have child elements (only set text on leaf nodes or buttons/spans)
+    if (el.children.length > 0) return;
+    try { el.textContent = t[key]; } catch(e) {}
+  });
+
+  // Placeholders
+  document.querySelectorAll('[data-key-placeholder]').forEach(el => {
+    const key = el.dataset.keyPlaceholder;
+    if (t[key] !== undefined) {
+      try { el.placeholder = t[key]; } catch(e) {}
+    }
+  });
+
+  // Select first options (placeholder options)
+  document.querySelectorAll('select option[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    if (t[key] !== undefined) {
+      try { el.textContent = t[key]; } catch(e) {}
+    }
+  });
+}
+
+// ═══════════════════════════════ MIC / SPEECH ═══════════════════════════════
+function startMic(targetId, langHint) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const t = T[currentLang] || T.en;
+
+  if (!SpeechRecognition) {
+    showToast('❌ ' + t.mic_error, 3000);
+    return;
+  }
+
+  // Find the mic button that triggered this
+  const targetEl = document.getElementById(targetId);
+  const micBtn = targetEl.parentElement.querySelector('.mic-btn');
+
+  if (micRecognition) { micRecognition.stop(); micRecognition = null; return; }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = LANG_SPEECH_CODES[currentLang] || 'hi-IN';
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  micRecognition = recognition;
+
+  micBtn.classList.add('recording');
+  showToast('🎤 ' + t.mic_listening, 10000);
+
+  recognition.onresult = (e) => {
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    targetEl.value = transcript;
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove('recording');
+    micRecognition = null;
+    hideToast();
+    showToast('✅ ' + t.mic_done, 2000);
+  };
+
+  recognition.onerror = (e) => {
+    micBtn.classList.remove('recording');
+    micRecognition = null;
+    hideToast();
+    showToast('❌ ' + (e.error === 'not-allowed' ? 'Mic permission denied' : t.mic_error), 3000);
+  };
+
+  recognition.start();
+}
+
+function showToast(msg, duration) {
+  const toast = document.getElementById('mic-toast');
+  if (!toast) return;
+  const span = document.getElementById('mic-toast-text');
+  if (span) span.textContent = '';
+  toast.textContent = msg;
+  toast.classList.add('show');
+  if (duration) setTimeout(hideToast, duration);
+}
+function hideToast() {
+  document.getElementById('mic-toast').classList.remove('show');
+}
+
+// ═══════════════════════════════ NAVIGATION ═══════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'subsidy') autoFetchSubsidiesIfNeeded();
+}
+
+function showDtab(name, btn) {
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.detail-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dpane-' + name).classList.add('active');
+}
+
+// ═══════════════════════════════ CROP LOGIC ═══════════════════════════════
+async function generateCrops() {
+  const region = document.getElementById('region').value;
+  const soil = document.getElementById('soil').value;
+  const season = document.getElementById('season').value;
+  const budget = document.getElementById('budget').value;
+  if (!region || !soil || !season || !budget) {
+    alert('Please fill in all fields first.');
+    return;
+  }
+  const btn = document.getElementById('generate-btn');
+  const icon = document.getElementById('gen-icon');
+  btn.disabled = true;
+  icon.innerHTML = '<span class="spinner"></span>';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        messages: [{ role: 'user', content: `You are an expert Indian agricultural advisor. Farmer details: Region: ${region}, Soil: ${soil}, Season: ${season}, Budget: ${budget}. Suggest 3 ideal crops. Reply ONLY with JSON array (no markdown):
+[{"name":"Wheat","icon":"🌾","badge":"Best Choice","profit":"₹60K-80K/acre","duration":"90-120 days","water":"Low","reason":"Short explanation"},{"name":"Mustard","icon":"🌻","badge":"High Return","profit":"₹45K-65K/acre","duration":"90 days","water":"Low","reason":"Short explanation"},{"name":"Chickpea","icon":"🫘","badge":"Safe Bet","profit":"₹35K-50K/acre","duration":"100 days","water":"Low","reason":"Short explanation"}]` }]
+      })
+    });
+    const data = await resp.json();
+    let text = data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+    currentCrops = JSON.parse(text);
+    currentCrops.forEach((c,i) => { c.rev=[120000,95000,75000][i]; c.cost=[85000,70000,55000][i]; });
+  } catch {
+    const fallback = {
+      Kharif:{ Punjab:[mc('Rice','🌾','Top Pick'),mc('Maize','🌽','Alternative'),mc('Cotton','🌿','Safe Bet')], Telangana:[mc('Rice','🌾','Top Pick'),mc('Maize','🌽','Alternative'),mc('Cotton','🌿','Safe Bet')], default:[mc('Rice','🌾','Top Pick'),mc('Maize','🌽','Alternative'),mc('Bajra','🌾','Safe Bet')] },
+      Rabi:{ Punjab:[mc('Wheat','🌾','Top Pick'),mc('Mustard','🌻','Alternative'),mc('Chickpea','🫘','Safe Bet')], default:[mc('Wheat','🌾','Top Pick'),mc('Mustard','🌻','Alternative'),mc('Lentil','🫛','Safe Bet')] },
+      Zaid:{ default:[mc('Watermelon','🍉','Top Pick'),mc('Cucumber','🥒','Alternative'),mc('Muskmelon','🍈','Safe Bet')] }
+    };
+    const db = fallback[season] || fallback.Rabi;
+    currentCrops = db[region] || db.default;
+  }
+
+  renderCropOptions();
+  btn.disabled = false; icon.textContent = '🤖';
+  document.getElementById('recommendation-context').textContent = `${region} · ${season}`;
+  document.getElementById('crop-options-section').classList.remove('hidden');
+}
+
+function mc(name, icon, badge) {
+  const costs={Rice:{rev:120000,cost:85000},Wheat:{rev:95000,cost:60000},Maize:{rev:75000,cost:50000},Cotton:{rev:180000,cost:135000},Mustard:{rev:70000,cost:50000},Chickpea:{rev:85000,cost:60000},Bajra:{rev:55000,cost:37000},Lentil:{rev:63000,cost:45000},Watermelon:{rev:125000,cost:90000},Cucumber:{rev:85000,cost:60000},Muskmelon:{rev:98000,cost:70000}};
+  const dur={Rice:'120-150d',Wheat:'90-120d',Maize:'80-110d',Cotton:'160-200d',Mustard:'90-110d',Chickpea:'90-110d',Bajra:'70-90d',Lentil:'80-100d',Watermelon:'60-90d',Cucumber:'45-70d',Muskmelon:'70-100d'};
+  const wat={Rice:'High',Cotton:'High',Wheat:'Medium',Maize:'Medium',Mustard:'Low',Chickpea:'Low',Bajra:'Low',Lentil:'Low',Watermelon:'Medium',Cucumber:'Medium',Muskmelon:'Medium'};
+  const p = costs[name]||{rev:85000,cost:60000};
+  return {name,icon,badge,profit:`₹${Math.round((p.rev-p.cost)/1000)}K/acre`,duration:dur[name]||'90-120d',water:wat[name]||'Medium',rev:p.rev,cost:p.cost};
+}
+
+function renderCropOptions() {
+  const grid = document.getElementById('crop-options-grid');
+  grid.innerHTML = '';
+  currentCrops.forEach((crop, i) => {
+    const card = document.createElement('div');
+    card.className = 'crop-card';
+    card.onclick = () => { document.querySelectorAll('.crop-card').forEach(c=>c.classList.remove('selected')); card.classList.add('selected'); selectedCrop=currentCrops[i]; document.getElementById('select-btn').disabled=false; };
+    card.innerHTML = `<div class="badge">${crop.badge}</div><div class="crop-icon">${crop.icon}</div><div class="crop-name">${crop.name}</div><div class="crop-stat">⏱ ${crop.duration}</div><div class="crop-stat">💧 ${crop.water}</div>${crop.reason?`<div class="crop-stat" style="font-style:italic;margin-top:4px;">${crop.reason}</div>`:''}<div class="crop-profit">Profit: ${crop.profit}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function selectCrop() {
+  if (!selectedCrop) return;
+  renderCropDetail(selectedCrop);
+  document.getElementById('crop-options-section').classList.add('hidden');
+  document.getElementById('crop-detail-section').classList.remove('hidden');
+}
+function goBack() {
+  document.getElementById('crop-detail-section').classList.add('hidden');
+  document.getElementById('crop-options-section').classList.remove('hidden');
+}
+
+function renderCropDetail(crop) {
+  document.getElementById('detail-crop-name').textContent = `${crop.icon} ${crop.name}`;
+  document.getElementById('detail-tags').innerHTML = `<span class="tag tag-green">${crop.duration}</span><span class="tag tag-gold">💧 ${crop.water}</span><span class="tag tag-blue">${crop.badge}</span>`;
+  renderCostTimeline(crop); renderCompare(crop); renderCompanion(crop); renderPests(crop); renderPriceChart(crop);
+  // Reset dtabs
+  document.querySelectorAll('.dtab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.detail-pane').forEach((p,i)=>p.classList.toggle('active',i===0));
+}
+
+function renderCostTimeline(crop) {
+  const stages=[{t:'Land Preparation',d:'Ploughing, levelling, soil treatment',p:.12},{t:'Seeds & Sowing',d:'Quality seeds, planting labour',p:.18},{t:'Fertilizers',d:'Basal + top dressing (NPK, urea)',p:.20},{t:'Irrigation',d:'Water & electricity charges',p:.15},{t:'Pesticides & Weedicides',d:'Crop protection inputs',p:.12},{t:'Labour (Intercultural)',d:'Weeding, thinning, earthing',p:.10},{t:'Harvest & Threshing',d:'Machine/labour harvest cost',p:.08},{t:'Transport to Market',d:'Loading, transport, mandi fees',p:.05}];
+  const tc=crop.cost||80000;
+  document.getElementById('cost-timeline').innerHTML = stages.map(s=>`<div class="tl-item"><div class="tl-dot"></div><div class="tl-title">${s.t}</div><div class="tl-desc">${s.d}</div><div class="tl-cost">₹${(Math.round(tc*s.p/100)*100).toLocaleString('en-IN')}</div></div>`).join('');
+  document.getElementById('total-cost').textContent=`₹${tc.toLocaleString('en-IN')}`;
+  document.getElementById('total-revenue').textContent=`₹${(crop.rev||120000).toLocaleString('en-IN')}`;
+  document.getElementById('net-profit').textContent=`₹${((crop.rev||120000)-tc).toLocaleString('en-IN')} 🎉`;
+  const where={Rice:'Agri cooperatives, IFFCO outlets, local KVK centres',Wheat:'Govt. agri stores, HAFED, cooperative societies',Cotton:'State Dept of Agriculture, Rallis India dealers',default:'Local IFFCO/KRIBHCO dealer, state agri dept, cooperative society'};
+  document.getElementById('where-to-buy').textContent=where[crop.name]||where.default;
+}
+
+function renderCompare(crop) {
+  const rows=[{name:'⭐ '+crop.name,cost:'₹'+(crop.cost||80000).toLocaleString('en-IN'),rev:'₹'+(crop.rev||120000).toLocaleString('en-IN'),profit:(crop.rev||120000)-(crop.cost||80000),risk:'Low',h:true},{name:'Sugarcane',cost:'₹1,20,000',rev:'₹1,80,000',profit:60000,risk:'Medium',h:false},{name:'Vegetables',cost:'₹60,000',rev:'₹1,10,000',profit:50000,risk:'High',h:false},{name:'Pulses',cost:'₹40,000',rev:'₹70,000',profit:30000,risk:'Low',h:false}];
+  document.getElementById('compare-table').innerHTML=`<thead><tr><th>Crop</th><th>Cost</th><th>Revenue</th><th>Profit</th><th>Risk</th></tr></thead><tbody>${rows.map(r=>`<tr${r.h?' class="highlight"':''}><td><strong>${r.name}</strong></td><td>${r.cost}</td><td>${r.rev}</td><td class="green">₹${r.profit.toLocaleString('en-IN')}</td><td class="${r.risk==='Low'?'green':r.risk==='High'?'red':''}">${r.risk}</td></tr>`).join('')}</tbody>`;
+}
+
+function renderCompanion(crop) {
+  document.getElementById('companion-main-crop').textContent=crop.name;
+  const c={Rice:[{n:'Azolla',i:'🌿',b:'Natural nitrogen fixer, reduces urea by 25%'},{n:'Green Gram',i:'🫘',b:'Legume that enriches soil between paddy rows'}],Wheat:[{n:'Mustard',i:'🌻',b:'Repels aphids, provides extra income'},{n:'Gram',i:'🫘',b:'Fixes nitrogen, excellent rotation crop'}],Maize:[{n:'Cowpea',i:'🫘',b:'Covers soil, fixes nitrogen'},{n:'Pumpkin',i:'🎃',b:'Ground cover prevents weeds'}],Cotton:[{n:'Green Gram',i:'🫘',b:'Short duration, harvested early'},{n:'Sesame',i:'🌱',b:'Attracts bollworm predators'}],default:[{n:'Marigold',i:'🌼',b:'Repels nematodes and insect pests'},{n:'Coriander',i:'🌿',b:'Attracts beneficial insects'}]};
+  const list=c[crop.name]||c.default;
+  document.getElementById('companion-grid').innerHTML=list.map(x=>`<div class="companion-card"><div class="companion-icon">${x.i}</div><div><div class="companion-name">${x.n}</div><div class="companion-benefit">${x.b}</div></div></div>`).join('');
+}
+
+function renderPests(crop) {
+  const p={Rice:[{i:'🐛',n:'Brown Plant Hopper',d:'Sucks sap, causes hopper burn',s:'Spray Imidacloprid 200SL @ 0.3ml/L'},{i:'🦠',n:'Blast Disease',d:'Fungal disease on leaves & neck',s:'Spray Tricyclazole 75WP @ 0.6g/L'}],Wheat:[{i:'🦀',n:'Rust (Yellow/Brown)',d:'Fungal pustules on leaves',s:'Spray Propiconazole 25EC @ 1ml/L'},{i:'🐛',n:'Aphids',d:'Colonies suck sap from shoots',s:'Spray Dimethoate 30EC @ 2ml/L'}],default:[{i:'🐛',n:'Stem Borer',d:'Larva bores into stem — dead heart',s:'Use Carbofuran 3G @ 8kg/acre'},{i:'🦠',n:'Leaf Blight',d:'Brown spots on leaves',s:'Spray Mancozeb 75WP @ 2.5g/L'}]};
+  const list=p[crop.name]||p.default;
+  document.getElementById('pest-grid').innerHTML=list.map(x=>`<div class="pest-row"><div class="pest-icon">${x.i}</div><div><div class="pest-name">⚠️ ${x.n}</div><div class="pest-desc">${x.d}</div><div class="pest-solution">✅ ${x.s}</div></div></div>`).join('');
+}
+
+function renderPriceChart(crop) {
+  const pm={Rice:{months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],prices:[2100,2050,2000,1980,1970,2000,2100,2200,2400,2600,2500,2200],peak:[9,10]},Wheat:{months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],prices:[2200,2250,2400,2600,2500,2300,2100,2050,2100,2150,2200,2250],peak:[3,4]},default:{months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],prices:[3000,2800,2600,2500,2600,2800,3100,3400,3600,3500,3200,3000],peak:[8,9]}};
+  const pd=pm[crop.name]||pm.default;
+  const maxP=Math.max(...pd.prices);
+  document.getElementById('price-chart').innerHTML=pd.months.map((m,i)=>{const pct=Math.round(pd.prices[i]/maxP*100);const peak=pd.peak.includes(i);return `<div class="price-bar-wrap"><div class="price-month">${m}</div><div class="price-bar-bg"><div class="price-bar${peak?' price-peak':''}" style="width:${pct}%"><span class="price-val">₹${pd.prices[i]}</span></div></div>${peak?'<span class="peak-label">PEAK</span>':''}</div>`;}).join('');
+  const peakMonths=pd.peak.map(i=>pd.months[i]).join(' & ');
+  document.getElementById('best-sell-time').textContent=`Best time to sell ${crop.name}: ${peakMonths} — ${Math.round((pd.prices[pd.peak[0]]/Math.min(...pd.prices)-1)*100)}% above seasonal low.`;
+}
+
+// ═══════════════════════════════ PLANT DOCTOR ═══════════════════════════════
+function previewImage(input) {
+  const img = document.getElementById('preview-img');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; img.style.display = 'block'; };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+async function diagnosePlant() {
+  const plant = document.getElementById('plant-name').value.trim();
+  const issue = document.getElementById('plant-issue').value.trim();
+  if (!plant || !issue) { alert('Please enter plant name and describe the issue.'); return; }
+  const btn = document.getElementById('diagnose-btn');
+  const icon = document.getElementById('diagnose-icon');
+  btn.disabled = true;
+  icon.innerHTML = '<span class="spinner"></span>';
+  const responseBox = document.getElementById('plant-response');
+  const responseText = document.getElementById('plant-response-text');
+  responseBox.classList.remove('show');
+  const langName = {en:'English',hi:'Hindi',te:'Telugu',mr:'Marathi',gu:'Gujarati',bn:'Bengali',or:'Odia',as:'Assamese'}[currentLang]||'English';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        messages: [{ role: 'user', content: `You are an expert Indian agricultural plant pathologist. A farmer reports their ${plant} has: "${issue}". Diagnose and provide: 1.**Likely Problem** 2.**Cause** 3.**Symptoms to confirm** 4.**Immediate Action** (24-48h) 5.**Treatment** (Indian market product names + doses) 6.**Prevention**. Reply in ${langName} language. Use **bold** for headings.` }]
+      })
+    });
+    const data = await resp.json();
+    let text = data.content.map(c => c.text||'').join('').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    responseText.innerHTML = text;
+  } catch {
+    responseText.innerHTML = `<strong>Diagnosis for ${plant}:</strong><br><br>This appears to be a <strong>fungal or nutritional issue</strong>.<br><strong>Immediate:</strong> Remove infected leaves, isolate plant.<br><strong>Treatment:</strong> Spray Mancozeb 75WP @ 2.5g/L every 7 days × 3 weeks.<br><strong>Helpline:</strong> Kisan Call Centre <strong>1800-180-1551</strong> (Free, 24×7, available in all regional languages).`;
+  }
+  responseBox.classList.add('show');
+  btn.disabled = false;
+  icon.textContent = '🔬';
+}
+
+// ═══════════════════════════════ LIVE SUBSIDIES ═══════════════════════════════
+let subsidiesFetched = false;
+
+function autoFetchSubsidiesIfNeeded() {
+  // Don't auto-fetch, let user click — but highlight the button
+  document.getElementById('subsidy-fetch-btn').style.animation = 'pulse 2s 3';
+}
+
+async function fetchLiveSubsidies() {
+  const state = document.getElementById('subsidy-state').value;
+  const btn = document.getElementById('subsidy-fetch-btn');
+  const icon = document.getElementById('subsidy-fetch-icon');
+  btn.disabled = true;
+  icon.innerHTML = '<span class="spinner"></span>';
+
+  const container = document.getElementById('subsidy-list');
+  const langName = {en:'English',hi:'Hindi',te:'Telugu',mr:'Marathi',gu:'Gujarati',bn:'Bengali',or:'Odia',as:'Assamese'}[currentLang]||'English';
+
+  // Show loading skeletons
+  container.innerHTML = Array(5).fill('').map(()=>`<div class="subsidy-item"><div class="subsidy-icon skel" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;"></div><div style="flex:1;"><div class="skel" style="height:14px;width:60%;margin-bottom:6px;"></div><div class="skel" style="height:11px;width:90%;margin-bottom:4px;"></div><div class="skel" style="height:11px;width:40%;"></div></div></div>`).join('');
+
+  try {
+    const stateText = state === 'national' ? 'national level India' : `${state} state India`;
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: `Search for the latest 2025 farmer subsidies and government agricultural schemes for ${stateText}. Include: PM-KISAN latest amount, any new schemes announced in 2025 budget, state-specific schemes for ${state}, latest updates to PMFBY, KCC, PMKSY, and any new farmer welfare schemes. Reply ONLY as a valid JSON array (no markdown, no explanation):
+[
+  {"icon":"💵","name":"Scheme Name","desc":"Brief description","amount":"₹X amount or X% subsidy","source":"Source/Ministry","new":true/false}
+]
+Include 6-8 schemes. Set "new":true only for schemes updated or launched in 2024-2025. Reply in ${langName} language for desc field only.` }]
+      })
+    });
+    const data = await resp.json();
+    let text = data.content.map(c => c.type==='text' ? c.text : '').join('').replace(/```json|```/g,'').trim();
+    // Extract JSON array
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('No JSON');
+    const schemes = JSON.parse(match[0]);
+    renderSubsidies(schemes);
+    subsidiesFetched = true;
+    document.querySelector('#subsidy-list-container p').textContent = '✅ Updated with latest AI-searched data. Last fetched: ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    // Fallback rich static data
+    renderSubsidies([
+      {icon:'💵',name:'PM-KISAN 2025',desc:'Direct income support — 19th installment released. New beneficiaries added via eKYC.',amount:'₹6,000/year',source:'Ministry of Agriculture',new:true},
+      {icon:'🌧️',name:'PMFBY (Updated 2025)',desc:'Crop insurance with improved claim settlement via satellite & drone imagery.',amount:'1.5%–5% premium',source:'PMFBY Portal',new:true},
+      {icon:'☀️',name:'PM-KUSUM Phase B',desc:'Solar pumps for farmers — new districts added. Apply via state portal.',amount:'60% central subsidy',source:'MNRE 2025',new:true},
+      {icon:'💧',name:'PMKSY – Har Khet Ko Pani',desc:'Micro-irrigation expansion. Small farmers get higher subsidy component.',amount:'55% (small), 45% (others)',source:'Jal Shakti Ministry',new:false},
+      {icon:'🚜',name:'SMAM – Farm Mechanization',desc:'Tractors, power tillers, harvesters. New CHC Farm Machinery hubs.',amount:'25%–50% subsidy',source:'MoAFW',new:false},
+      {icon:'🏦',name:'Kisan Credit Card 2025',desc:'Extended to fisheries & animal husbandry. Digital KCC via Jan Dhan.',amount:'4% effective interest',source:'NABARD/RBI',new:true},
+      {icon:'🌱',name:'National Mission on Oilseeds 2025',desc:'New scheme for oilseed farmers — higher MSP and input subsidy.',amount:'₹10,000 bonus/hectare',source:'Budget 2025-26',new:true},
+      {icon:'🏘️',name:'Agri Infra Fund',desc:'Low-cost loan for post-harvest infrastructure, storage, cold chains.',amount:'3% interest subvention',source:'AIF Portal',new:false}
+    ]);
+  }
+  btn.disabled = false;
+  icon.textContent = '🔄';
+}
+
+function renderSubsidies(schemes) {
+  document.getElementById('subsidy-list').innerHTML = schemes.map(s => `
+    <div class="subsidy-item">
+      <div class="subsidy-icon">${s.icon}</div>
+      <div>
+        <div class="subsidy-name">${s.name} ${s.new?'<span style="background:#dcfce7;color:#15803d;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:5px;">NEW</span>':''}</div>
+        <div class="subsidy-desc">${s.desc}</div>
+        <div class="subsidy-amt">${s.amount}</div>
+        ${s.source?`<div class="subsidy-source">📌 ${s.source}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
